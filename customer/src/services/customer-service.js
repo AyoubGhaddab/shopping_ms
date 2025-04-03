@@ -156,6 +156,10 @@ class CustomerService {
   }
 
   async SubscribeEvents(payload) {
+    console.log('Triggering.... Customer Events');
+
+    payload = JSON.parse(payload);
+
     const { event, data } = payload;
 
     const { userId, product, order, qty } = data;

@@ -1,8 +1,9 @@
+const { CUSTOMER_SERVICE, SHOPPING_SERVICE } = require('../config');
 const ProductService = require('../services/product-service');
-const { PublishCustomerEvents, PublishShoppingEvents } = require('../utils');
+const { PublishMessage } = require('../utils');
 const UserAuth = require('./middlewares/auth');
 
-module.exports = (app) => {
+module.exports = (app, channel) => {
   const service = new ProductService();
 
   app.post('/product/create', async (req, res, next) => {
@@ -69,10 +70,13 @@ module.exports = (app) => {
         { productId: req.body._id },
         'ADD_TO_WISHLIST'
       );
-      PublishCustomerEvents(data);
-
+      console.log(data);
+      //PublishCustomerEvents(data);
+      PublishMessage(channel, CUSTOMER_SERVICE, JSON.stringify(data));
       return res.status(200).json(data.data.product);
-    } catch (err) {}
+    } catch (err) {
+      throw err;
+    }
   });
 
   app.delete('/wishlist/:id', UserAuth, async (req, res, next) => {
@@ -85,7 +89,9 @@ module.exports = (app) => {
         { productId },
         'REMOVE_FROM_WISHLIST'
       );
-      PublishCustomerEvents(data);
+      //PublishCustomerEvents(data);
+      PublishMessage(channel, CUSTOMER_SERVICE, JSON.stringify(data));
+
       return res.status(200).json(data.data.product);
     } catch (err) {
       next(err);
@@ -101,8 +107,10 @@ module.exports = (app) => {
         { productId, qty },
         'ADD_TO_CART'
       );
-      PublishCustomerEvents(data);
-      PublishShoppingEvents(data);
+      console.log(data);
+      PublishMessage(channel, CUSTOMER_SERVICE, JSON.stringify(data));
+      PublishMessage(channel, SHOPPING_SERVICE, JSON.stringify(data));
+
       const response = {
         product: data.data.product,
         unit: data.data.qty,
@@ -123,8 +131,9 @@ module.exports = (app) => {
         { productId },
         'REMOVE_FROM_CART'
       );
-      PublishCustomerEvents(data);
-      PublishShoppingEvents(data);
+      PublishMessage(channel, CUSTOMER_SERVICE, JSON.stringify(data));
+      PublishMessage(channel, SHOPPING_SERVICE, JSON.stringify(data));
+
       const response = {
         product: data.data.product,
         unit: data.data.qty,

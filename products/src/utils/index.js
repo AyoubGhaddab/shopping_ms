@@ -1,8 +1,12 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const axios = require('axios');
-
-const { APP_SECRET } = require('../config');
+const amqplib = require('amqplib');
+const {
+  APP_SECRET,
+  MSG_QUEUE_URL,
+  EXCHANGE_NAME,
+  QUEUE_NAME,
+} = require('../config');
 
 //Utility functions
 module.exports.GenerateSalt = async () => {
@@ -50,9 +54,22 @@ module.exports.FormateData = (data) => {
     throw new Error('Data Not found!');
   }
 };
-module.exports.PublishCustomerEvents = (payload) => {
-  axios.post('http://localhost:8000/customer/app-events', { payload });
+
+/* -------------- Message Broker ----------------*/
+//Message Broker
+
+module.exports.CreateChannel = async () => {
+  try {
+    const connection = await amqplib.connect(MSG_QUEUE_URL);
+    const channel = await connection.createChannel();
+    await channel.assertQueue(EXCHANGE_NAME, 'direct', { durable: true });
+    return channel;
+  } catch (err) {
+    throw err;
+  }
 };
-module.exports.PublishShoppingEvents = (payload) => {
-  axios.post('http://localhost:8000/shopping/app-events', { payload });
+
+module.exports.PublishMessage = (channel, service, msg) => {
+  channel.publish(EXCHANGE_NAME, service, Buffer.from(msg));
+  console.log('Sent: ', msg);
 };

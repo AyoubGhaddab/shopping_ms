@@ -4,8 +4,8 @@ const Schema = mongoose.Schema;
 
 const CartSchema = new Schema(
   {
-    CustomerId: { type: String },
-    cart: [
+    customerId: { type: String },
+    items: [
       {
         product: {
           _id: { type: String, require: true },

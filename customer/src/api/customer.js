@@ -1,8 +1,10 @@
 const CustomerService = require('../services/customer-service');
 const UserAuth = require('./middlewares/auth');
+const { SubscribeMessage } = require('../utils');
 
-module.exports = (app) => {
+module.exports = (app, channel) => {
   const service = new CustomerService();
+  SubscribeMessage(channel, service);
 
   app.post('/signup', async (req, res, next) => {
     try {
@@ -74,5 +76,8 @@ module.exports = (app) => {
     } catch (err) {
       next(err);
     }
+  });
+  app.get('/whoami', (req, res, next) => {
+    return res.status(200).json({ msg: '/customer : I am Customer Service' });
   });
 };

@@ -1,4 +1,4 @@
-const { CustomerModel, OrderModel, CartModel } = require('../models');
+const { OrderModel, CartModel } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const { APIError, BadRequestError } = require('../../utils/app-errors');
 
@@ -74,40 +74,45 @@ class ShoppingRepository {
   async CreateNewOrder(customerId, txnId) {
     //required to verify payment through TxnId
 
-    const cart = await CartModel.findOne({ customerId: customerId });
+    try {
+      const cart = await CartModel.findOne({ customerId: customerId });
 
-    if (cart) {
-      let amount = 0;
+      if (cart) {
+        let amount = 0;
 
-      let cartItems = cart.items;
+        let cartItems = cart.items;
 
-      if (cartItems.length > 0) {
-        //process Order
+        if (cartItems.length > 0) {
+          //process Order
 
-        cartItems.map((item) => {
-          amount += parseInt(item.product.price) * parseInt(item.unit);
-        });
+          cartItems.map((item) => {
+            amount += parseInt(item.product.price) * parseInt(item.unit);
+          });
 
-        const orderId = uuidv4();
+          const orderId = uuidv4();
 
-        const order = new OrderModel({
-          orderId,
-          customerId,
-          amount,
-          txnId,
-          status: 'received',
-          items: cartItems,
-        });
+          const order = new OrderModel({
+            orderId,
+            customerId,
+            amount,
+            txnId,
+            status: 'received',
+            items: cartItems,
+          });
 
-        cart.items = [];
+          cart.items = [];
 
-        const orderResult = await order.save();
-        await cart.save();
-        return orderResult;
+          const orderResult = await order.save();
+          await cart.save();
+          return orderResult;
+        }
       }
-    }
 
-    return {};
+      return {};
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   }
 }
 
